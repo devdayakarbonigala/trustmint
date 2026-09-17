@@ -1,0 +1,11 @@
+{
+  "type_id": "ticket", "name": "Event Ticket",
+  "fields": [
+    {"key":"attendee","label":"Attendee","type":"text","required":true},
+    {"key":"event","label":"Event","type":"text","required":true},
+    {"key":"seat","label":"Seat","type":"text","required":false}
+  ],
+  "expiry_hours": 720, "one_time": true, "max_verifications": 1,
+  "ai_hook": null, "template_id": "ticket_v1",
+  "issuer_role": "organizer", "verifier_role": "gate"
+}

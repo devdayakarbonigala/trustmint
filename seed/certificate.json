@@ -1,0 +1,11 @@
+{
+  "type_id": "certificate", "name": "Degree Certificate",
+  "fields": [
+    {"key":"recipient","label":"Student name","type":"text","required":true},
+    {"key":"course","label":"Degree / Course","type":"text","required":true},
+    {"key":"institution","label":"Institution","type":"text","required":true}
+  ],
+  "expiry_hours": 876000, "one_time": false, "max_verifications": null,
+  "ai_hook": null, "template_id": "cert_v1",
+  "issuer_role": "university", "verifier_role": "employer"
+}
