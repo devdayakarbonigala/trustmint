@@ -32,6 +32,10 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy: {TableName: types}
         - DynamoDBCrudPolicy: {TableName: documents}
+        - Statement:
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource: "*"
       Events:
         Api: {Type: HttpApi, Properties: {Path: /create, Method: post}}
 
