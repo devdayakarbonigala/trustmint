@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrustMint</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--bg:#eceee9;--card:#f7f8f4;--ink:#1e2420;--mut:#5a615a;--line:#ccd0c6;
+        --accent:#b0542c;--good:#3f6b52;--warn:#8c6d22;--bad:#a33224;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  header{padding:22px 20px;border-bottom:2px solid var(--ink);}
+  h1{margin:0;font-size:22px;letter-spacing:-.01em;}
+  header p{margin:4px 0 0;color:var(--mut);font-size:13px;}
+  main{max-width:860px;margin:0 auto;padding:20px;display:grid;
+       grid-template-columns:1fr 1fr;gap:18px;}
+  .card{background:var(--card);border:1px solid var(--line);padding:18px;}
+  h2{margin:0 0 14px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);}
+  label{display:block;font-size:12px;color:var(--mut);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;}
+  input{width:100%;padding:9px 10px;border:1px solid var(--line);background:var(--bg);
+        color:var(--ink);font:inherit;}
+  button{margin-top:14px;width:100%;padding:11px;border:1px solid var(--ink);background:var(--ink);
+         color:var(--bg);font:inherit;font-weight:600;cursor:pointer;}
+  button:hover{background:var(--accent);border-color:var(--accent);}
+  .out{margin-top:14px;font-size:13px;word-break:break-all;}
+  #qr{margin-top:14px;display:flex;justify-content:center;}
+  .res{margin-top:14px;padding:12px;border:1px solid var(--line);font-weight:600;text-align:center;}
+  .valid{color:var(--good);border-color:var(--good);}
+  .used,.expired,.revoked{color:var(--warn);border-color:var(--warn);}
+  .invalid{color:var(--bad);border-color:var(--bad);}
+  .hash{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mut);}
+  @media(max-width:640px){main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>TrustMint</h1>
+  <p>Universal forge-proofing engine — nothing exists until you need it.</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Doctor — issue prescription</h2>
+    <label>Patient name</label><input id="patient" value="Ravi Kumar">
+    <label>Medicines (comma separated)</label><input id="drugs" value="Alprazolam, Diazepam">
+    <label>Prescriber</label><input id="doctor" value="Dr Rao">
+    <button onclick="issue()">Mint prescription</button>
+    <div class="out" id="issueOut"></div>
+    <div id="qr"></div>
+  </section>
+  <section class="card">
+    <h2>Pharmacist — verify</h2>
+    <label>QR hash</label><input id="hash" placeholder="paste or auto-filled after minting">
+    <button onclick="verify()">Verify</button>
+    <div id="verifyOut"></div>
+  </section>
+</main>
+<script>
+const API = "https://w833oaqx0j.execute-api.ap-south-1.amazonaws.com";
+async function issue(){
+  const drugs = document.getElementById('drugs').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const payload = {patient:document.getElementById('patient').value,
+                   drugs, doctor:document.getElementById('doctor').value};
+  const r = await fetch(API+'/create',{method:'POST',
+            body:JSON.stringify({type_id:'prescription',payload})});
+  const d = await r.json();
+  document.getElementById('issueOut').innerHTML =
+    d.qr_hash ? 'Minted. <span class="hash">'+d.qr_hash+'</span>' : JSON.stringify(d);
+  document.getElementById('qr').innerHTML='';
+  if(d.qr_hash){ new QRCode(document.getElementById('qr'),{text:d.qr_hash,width:150,height:150});
+                 document.getElementById('hash').value=d.qr_hash; }
+}
+async function verify(){
+  const qr_hash = document.getElementById('hash').value.trim();
+  const r = await fetch(API+'/verify',{method:'POST',body:JSON.stringify({qr_hash})});
+  const d = await r.json();
+  document.getElementById('verifyOut').innerHTML =
+    '<div class="res '+d.result+'">'+d.result.toUpperCase().replace('_',' ')+'</div>';
+}
+</script>
+</body>
+</html>
