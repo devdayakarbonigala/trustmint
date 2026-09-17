@@ -1,0 +1,16 @@
+{
+  "type_id": "prescription",
+  "name": "Medical Prescription",
+  "fields": [
+    {"key": "patient", "label": "Patient name", "type": "text", "required": true},
+    {"key": "drugs",   "label": "Medicines",    "type": "list", "required": true},
+    {"key": "doctor",  "label": "Prescriber",   "type": "text", "required": true}
+  ],
+  "expiry_hours": 48,
+  "one_time": true,
+  "max_verifications": 1,
+  "ai_hook": "drug-interaction",
+  "template_id": "rx_v1",
+  "issuer_role": "doctor",
+  "verifier_role": "pharmacist"
+}
