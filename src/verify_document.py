@@ -1,12 +1,18 @@
-import json, time
+import json, time, base64
 import boto3
 
 ddb = boto3.resource("dynamodb")
 docs_t  = ddb.Table("documents")
 types_t = ddb.Table("types")
 
+def _parse(event):
+    raw = event.get("body") or "{}"
+    if event.get("isBase64Encoded"):
+        raw = base64.b64decode(raw).decode()
+    return json.loads(raw)
+
 def handler(event, ctx):
-    body    = json.loads(event.get("body") or "{}")
+    body    = _parse(event)
     qr_hash = body.get("qr_hash")
 
     items = docs_t.scan(

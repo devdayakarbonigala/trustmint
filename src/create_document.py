@@ -1,12 +1,18 @@
-import json, uuid, hashlib, time
+import json, uuid, hashlib, time, base64
 import boto3
 
 ddb = boto3.resource("dynamodb")
 types_t = ddb.Table("types")
 docs_t  = ddb.Table("documents")
 
+def _parse(event):
+    raw = event.get("body") or "{}"
+    if event.get("isBase64Encoded"):
+        raw = base64.b64decode(raw).decode()
+    return json.loads(raw)
+
 def handler(event, ctx):
-    body    = json.loads(event.get("body") or "{}")
+    body    = _parse(event)
     type_id = body.get("type_id")
     payload = body.get("payload", {})
 
@@ -33,7 +39,6 @@ def handler(event, ctx):
     return _resp(200, {"doc_id": doc_id, "qr_hash": qr_hash, "warnings": warnings})
 
 def run_ai_hook(hook, payload):
-    # Praveen wires Bedrock here (drug-interaction check). No-op for now.
     return []
 
 def _resp(code, obj):
