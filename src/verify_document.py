@@ -4,6 +4,7 @@ import boto3
 ddb = boto3.resource("dynamodb")
 docs_t  = ddb.Table("documents")
 types_t = ddb.Table("types")
+log_t   = ddb.Table("verification_log")
 
 _SECRET = None
 def _secret():
@@ -31,34 +32,44 @@ def _bump_blocked(doc_id):
     except Exception:
         pass
 
+def _log(doc_id, qr_hash, result):
+    try:
+        log_t.put_item(Item={"doc_id": doc_id, "at": int(time.time() * 1000),
+                             "qr_hash": qr_hash, "result": result})
+    except Exception:
+        pass
+
 def handler(event, ctx):
     qr_hash = _parse(event).get("qr_hash")
     items = docs_t.scan(FilterExpression="qr_hash = :h",
         ExpressionAttributeValues={":h": qr_hash}).get("Items", [])
     if not items:
+        _log("unknown", qr_hash, "invalid")
         return _resp(200, {"result": "invalid"})
-    doc = items[0]
+    doc = items[0]; did = doc["doc_id"]
 
     if doc.get("sig"):
-        expect = _sign(doc["doc_id"], int(doc["created_at"]), doc.get("payload", {}))
+        expect = _sign(did, int(doc["created_at"]), doc.get("payload", {}))
         if not hmac.compare_digest(expect, doc["sig"]):
-            _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "tampered"})
+            _bump_blocked(did); _log(did, qr_hash, "tampered")
+            return _resp(200, {"result": "tampered"})
 
     t = types_t.get_item(Key={"type_id": doc["type_id"]}).get("Item", {})
     now = int(time.time())
     if doc.get("status") == "revoked":
-        _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "revoked"})
+        _bump_blocked(did); _log(did, qr_hash, "revoked"); return _resp(200, {"result": "revoked"})
     if now > int(doc["ttl"]):
-        _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "expired"})
+        _bump_blocked(did); _log(did, qr_hash, "expired"); return _resp(200, {"result": "expired"})
     if t.get("one_time") and int(doc["verification_count"]) >= 1:
-        _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "already_used"})
+        _bump_blocked(did); _log(did, qr_hash, "already_used"); return _resp(200, {"result": "already_used"})
 
     count  = int(doc["verification_count"]) + 1
     status = "used" if t.get("one_time") else "verified"
-    docs_t.update_item(Key={"doc_id": doc["doc_id"]},
+    docs_t.update_item(Key={"doc_id": did},
         UpdateExpression="SET verification_count = :c, #s = :st",
         ExpressionAttributeNames={"#s": "status"},
         ExpressionAttributeValues={":c": count, ":st": status})
+    _log(did, qr_hash, "valid")
     return _resp(200, {"result": "valid", "payload": doc["payload"],
                        "type": doc["type_id"], "verification": count})
 
