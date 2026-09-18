@@ -24,6 +24,18 @@ Resources:
       KeySchema: [{AttributeName: doc_id, KeyType: HASH}]
       TimeToLiveSpecification: {AttributeName: ttl, Enabled: true}
 
+  VerificationLogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: verification_log
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - {AttributeName: doc_id, AttributeType: S}
+        - {AttributeName: at, AttributeType: N}
+      KeySchema:
+        - {AttributeName: doc_id, KeyType: HASH}
+        - {AttributeName: at, KeyType: RANGE}
+
   CreateFn:
     Type: AWS::Serverless::Function
     Properties:
@@ -47,6 +59,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy: {TableName: types}
         - DynamoDBCrudPolicy: {TableName: documents}
+        - DynamoDBCrudPolicy: {TableName: verification_log}
       Events:
         Api: {Type: HttpApi, Properties: {Path: /verify, Method: post}}
 
@@ -69,6 +82,7 @@ Resources:
         - DynamoDBCrudPolicy: {TableName: documents}
       Events:
         Api: {Type: HttpApi, Properties: {Path: /dashboard, Method: get}}
+
   PdfFn:
     Type: AWS::Serverless::Function
     Properties:
@@ -79,6 +93,17 @@ Resources:
         - DynamoDBCrudPolicy: {TableName: documents}
       Events:
         Api: {Type: HttpApi, Properties: {Path: /pdf, Method: get}}
+
+  HistoryFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: history.handler
+      Policies:
+        - DynamoDBCrudPolicy: {TableName: verification_log}
+      Events:
+        Api: {Type: HttpApi, Properties: {Path: /history, Method: get}}
+
 Outputs:
   ApiUrl:
     Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
