@@ -69,7 +69,16 @@ Resources:
         - DynamoDBCrudPolicy: {TableName: documents}
       Events:
         Api: {Type: HttpApi, Properties: {Path: /dashboard, Method: get}}
-
+  PdfFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: pdf_document.handler
+      Policies:
+        - DynamoDBCrudPolicy: {TableName: types}
+        - DynamoDBCrudPolicy: {TableName: documents}
+      Events:
+        Api: {Type: HttpApi, Properties: {Path: /pdf, Method: get}}
 Outputs:
   ApiUrl:
     Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
