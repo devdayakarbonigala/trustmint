@@ -103,3 +103,16 @@ Development assisted by Claude (Anthropic). Document AI checks run on Amazon Bed
 ## Team METIS
 
 Dev Dayakar Bonigala (engine + lead) · Yakkala Manasa (frontend) · Praveen Chandika (types + AI + demo)
+
+## Demo access
+
+Sign in to the live app with any of these demo accounts:
+
+| Role | Username | Password |
+|---|---|---|
+| Doctor | doctor01 | Doctor@123 |
+| Pharmacist | pharmacist01 | Pharmacist@123 |
+| University Issuer | university01 | Issuer@123 |
+| Event Organizer | organizer01 | Organizer@123 |
+
+Doctors and issuers create documents; pharmacists and verifiers check them.
