@@ -1,0 +1,11 @@
+{
+  "type_id": "invoice", "name": "Tax Invoice",
+  "fields": [
+    {"key":"biller","label":"Biller","type":"text","required":true},
+    {"key":"payer","label":"Bill to","type":"text","required":true},
+    {"key":"amount","label":"Amount","type":"text","required":true}
+  ],
+  "expiry_hours": 8760, "one_time": false, "max_verifications": null,
+  "ai_hook": "content-validation", "template_id": "inv_v1",
+  "issuer_role": "vendor", "verifier_role": "auditor"
+}

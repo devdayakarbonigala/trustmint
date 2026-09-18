@@ -1,0 +1,11 @@
+{
+  "type_id": "event_pass", "name": "Event Pass",
+  "fields": [
+    {"key":"attendee","label":"Attendee","type":"text","required":true},
+    {"key":"event","label":"Event","type":"text","required":true},
+    {"key":"gate","label":"Gate","type":"text","required":false}
+  ],
+  "expiry_hours": 72, "one_time": true, "max_verifications": 1,
+  "ai_hook": null, "template_id": "pass_v1",
+  "issuer_role": "organizer", "verifier_role": "gate"
+}

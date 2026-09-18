@@ -1,0 +1,11 @@
+{
+  "type_id": "id_card", "name": "Staff ID Card",
+  "fields": [
+    {"key":"holder","label":"Holder","type":"text","required":true},
+    {"key":"employee_id","label":"Employee ID","type":"text","required":true},
+    {"key":"organisation","label":"Organisation","type":"text","required":true}
+  ],
+  "expiry_hours": 17520, "one_time": false, "max_verifications": null,
+  "ai_hook": null, "template_id": "id_v1",
+  "issuer_role": "hr", "verifier_role": "security"
+}
