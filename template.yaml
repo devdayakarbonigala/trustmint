@@ -91,6 +91,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy: {TableName: types}
         - DynamoDBCrudPolicy: {TableName: documents}
+        - DynamoDBCrudPolicy: {TableName: verification_log}
       Events:
         Api: {Type: HttpApi, Properties: {Path: /pdf, Method: get}}
 
