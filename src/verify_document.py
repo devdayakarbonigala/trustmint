@@ -11,9 +11,17 @@ def _parse(event):
         raw = base64.b64decode(raw).decode()
     return json.loads(raw)
 
+def _bump_blocked(doc_id):
+    try:
+        docs_t.update_item(
+            Key={"doc_id": doc_id},
+            UpdateExpression="ADD blocked_attempts :one",
+            ExpressionAttributeValues={":one": 1})
+    except Exception:
+        pass
+
 def handler(event, ctx):
-    body    = _parse(event)
-    qr_hash = body.get("qr_hash")
+    qr_hash = _parse(event).get("qr_hash")
 
     items = docs_t.scan(
         FilterExpression="qr_hash = :h",
@@ -26,11 +34,11 @@ def handler(event, ctx):
     now = int(time.time())
 
     if doc.get("status") == "revoked":
-        return _resp(200, {"result": "revoked"})
+        _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "revoked"})
     if now > int(doc["ttl"]):
-        return _resp(200, {"result": "expired"})
+        _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "expired"})
     if t.get("one_time") and int(doc["verification_count"]) >= 1:
-        return _resp(200, {"result": "already_used"})
+        _bump_blocked(doc["doc_id"]); return _resp(200, {"result": "already_used"})
 
     count  = int(doc["verification_count"]) + 1
     status = "used" if t.get("one_time") else "verified"
@@ -45,6 +53,5 @@ def handler(event, ctx):
 
 def _resp(code, obj):
     return {"statusCode": code,
-            "headers": {"Content-Type": "application/json",
-                        "Access-Control-Allow-Origin": "*"},
+            "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
             "body": json.dumps(obj)}
