@@ -1,3 +1,8 @@
 .aws-sam/
 __pycache__/
 *.pkg
+*.zip
+*.pdf
+valid
+tampered
+dist/
