@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>TrustMint — Camera QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #F3F1EE;
+      --card: #FFFFFF;
+      --ink: #2F2925;
+      --mut: #756B63;
+      --line: #DDD6CF;
+      --primary: #6B4F3A;
+      --primary-dark: #4A3428;
+      --accent: #A67C52;
+      --good: #4F7A5A;
+      --bad: #B45B52;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .scanner-card {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(47, 41, 37, 0.08);
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FAF8F5;
+    }
+    .header h1 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .close-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--mut);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .close-btn:hover {
+      background: #EAE6E1;
+      color: var(--ink);
+    }
+    .content {
+      padding: 20px;
+      text-align: center;
+    }
+    #reader {
+      width: 100%;
+      min-height: 280px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      margin-bottom: 16px;
+    }
+    #reader video {
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    .result-box {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 8px;
+      background: #F0F6F2;
+      border: 1px solid var(--good);
+      display: none;
+      text-align: left;
+    }
+    .result-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--good);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .result-hash {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 12px;
+      word-break: break-all;
+      background: #fff;
+      padding: 8px;
+      border: 1px solid #c7d8ce;
+      border-radius: 4px;
+      color: var(--ink);
+    }
+    .action-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .action-btn:hover {
+      background: var(--primary-dark);
+    }
+    .hint {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--mut);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scanner-card">
+    <div class="header">
+      <h1>TrustMint QR Camera Scanner</h1>
+      <button class="close-btn" onclick="goBack()">Back to App</button>
+    </div>
+    <div class="content">
+      <div id="reader"></div>
+
+      <div id="resultBox" class="result-box">
+        <div class="result-title">✓ QR Code Detected</div>
+        <div id="resultHash" class="result-hash"></div>
+        <button id="sendBtn" class="action-btn" onclick="sendToApp()">Send to Verification</button>
+      </div>
+
+      <p class="hint">Point your camera at a TrustMint document QR code</p>
+    </div>
+  </div>
+
+  <script>
+    let scannedHash = '';
+    let html5QrCode = null;
+
+    function extractHash(raw) {
+      if (!raw) return '';
+      const text = raw.trim();
+      const match = text.match(/[a-f0-9]{64}/i);
+      return match ? match[0] : text;
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+      const hash = extractHash(decodedText);
+      if (!hash) return;
+      scannedHash = hash;
+
+      document.getElementById('resultBox').style.display = 'block';
+      document.getElementById('resultHash').textContent = scannedHash;
+
+      // Broadcast to opener if opened in a popup
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({
+          type: 'TRUSTMINT_QR_SCANNED',
+          hash: scannedHash
+        }, '*');
+      }
+
+      // If parent iframe
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'TRUSTMINT_QR_SCANNED',
+          hash: scannedHash
+        }, '*');
+      }
+    }
+
+    function sendToApp() {
+      if (!scannedHash) return;
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: 'TRUSTMINT_QR_SCANNED', hash: scannedHash }, '*');
+        window.close();
+      } else {
+        window.location.href = '/?hash=' + encodeURIComponent(scannedHash);
+      }
+    }
+
+    function goBack() {
+      if (window.opener && !window.opener.closed) {
+        window.close();
+      } else if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        onScanSuccess
+      ).catch(err => {
+        console.warn("Camera failed to start automatically:", err);
+      });
+    });
+  </script>
+</body>
+</html>

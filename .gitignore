@@ -6,3 +6,5 @@ __pycache__/
 valid
 tampered
 dist/
+frontend/node_modules/
+frontend/dist/
